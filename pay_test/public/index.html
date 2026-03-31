@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suscripción</title>
+  <script src="https://cdn.conekta.io/js/latest/conekta.js"></script>
+</head>
+<body>
+  <h2>Suscribirme</h2>
+
+  <form id="card-form">
+    <input type="email" id="email" placeholder="Email" required />
+    <br /><br />
+
+    <input type="text" data-conekta="card[name]" placeholder="Nombre en tarjeta" required />
+    <br /><br />
+
+    <input type="text" data-conekta="card[number]" placeholder="Número de tarjeta" required />
+    <br /><br />
+
+    <input type="text" data-conekta="card[cvc]" placeholder="CVC" required />
+    <br /><br />
+
+    <input type="text" data-conekta="card[exp_month]" placeholder="Mes (MM)" required />
+    <br /><br />
+
+    <input type="text" data-conekta="card[exp_year]" placeholder="Año (YY)" required />
+    <br /><br />
+
+    <button type="submit">Suscribirme</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    Conekta.setPublicKey("key_u24jYwNmyhrkFzxYnEUgvaA");
+
+    const form = document.getElementById("card-form");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      status.innerText = "Procesando...";
+
+      Conekta.Token.create(
+        form,
+        function (token) {
+          fetch("/crear-suscripcion", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              token: token.id,
+              name: form.querySelector('[data-conekta="card[name]"]').value,
+              email: document.getElementById("email").value
+            })
+          })
+          .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+              throw new Error(data.error || "Error al crear suscripción");
+            }
+            status.innerText = "Suscripción creada con éxito";
+          })
+          .catch((err) => {
+            status.innerText = err.message;
+          });
+        },
+        function (error) {
+          status.innerText = error.message_to_purchaser || "Error al tokenizar tarjeta";
+        }
+      );
+    });
+  </script>
+</body>
+</html>
